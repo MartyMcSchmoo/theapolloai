@@ -13,51 +13,24 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <header class="hero">
-      <div>
-        <p class="eyebrow">Welcome to</p>
-        <h1>MakeMeMoney</h1>
-        <p class="lede">
-          A neon ad canyon inspired by Times Square. Scroll forever, stare at fake billboards, and climb the leaderboard
-          by staying the longest. No account, no paywalls—just your time.
-        </p>
-        <div class="cta-row">
-          <button id="scrollBtn">Scroll me</button>
-          <button class="ghost" id="toLeaderboard">Leaderboard</button>
-        </div>
+    <div class="hud">
+      <div class="pill">
+        Session <span id="sessionTime">00:00:00</span>
       </div>
-      <div class="stats">
-        <div class="stat">
-          <p class="label">Your session</p>
-          <p class="value" id="sessionTime">00:00:00</p>
-        </div>
-        <div class="stat">
-          <p class="label">Your record</p>
-          <p class="value" id="bestTime">--</p>
-        </div>
-        <div class="stat">
-          <p class="label">All-time top</p>
-          <p class="value" id="topTime">--</p>
-        </div>
+      <div class="pill">
+        Your record <span id="bestTime">--</span>
       </div>
-    </header>
+      <button id="resetBtn" class="ghost">Reset timer</button>
+    </div>
+
+    <div class="timer" aria-live="polite">
+      <div class="clock" id="clockDisplay">00:00:00</div>
+      <div class="subtext">Stay the longest to claim the (fake) crown.</div>
+    </div>
 
     <main>
       <section class="ad-wall" id="adWall" aria-label="Endless ad wall"></section>
-
-      <section class="leaderboard" id="leaderboard">
-        <div>
-          <p class="eyebrow">Leaderboard</p>
-          <h2>Longest visitors</h2>
-          <p class="lede small">Locally tracked—beat the clock and refresh to keep your crown.</p>
-        </div>
-        <ol id="boardList" class="board"></ol>
-      </section>
     </main>
-
-    <footer class="footer">
-      <p>Scroll. Zone out. Tell sponsors it makes money. Repeat.</p>
-    </footer>
 
     <script src="script.js" defer></script>
   </body>
