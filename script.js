@@ -1,17 +1,30 @@
 const adWall = document.getElementById('adWall');
 const sessionTimeEl = document.getElementById('sessionTime');
 const bestTimeEl = document.getElementById('bestTime');
-const topTimeEl = document.getElementById('topTime');
-const boardList = document.getElementById('boardList');
-const scrollBtn = document.getElementById('scrollBtn');
-const toLeaderboard = document.getElementById('toLeaderboard');
+const clockDisplay = document.getElementById('clockDisplay');
+const resetBtn = document.getElementById('resetBtn');
+const editToggle = document.getElementById('editToggle');
+const addAdBtn = document.getElementById('addAdBtn');
+const exportBtn = document.getElementById('exportBtn');
+const resetAdsBtn = document.getElementById('resetAdsBtn');
+const adModal = document.getElementById('adModal');
+const adForm = document.getElementById('adForm');
+const modalClose = document.getElementById('modalClose');
+const cancelModal = document.getElementById('cancelModal');
+
+const tagInput = document.getElementById('tagInput');
+const headlineInput = document.getElementById('headlineInput');
+const copyInput = document.getElementById('copyInput');
+const priceInput = document.getElementById('priceInput');
+const bgInput = document.getElementById('bgInput');
 
 const SESSION_KEY = 'makememoney_best_seconds';
+const ADS_KEY = 'makememoney_ads_v1';
 
 const slogans = [
   'Buy faster. Spend harder.',
   'Limited time forever sale!',
-  'World’s #1 impulse buy.',
+  "World's #1 impulse buy.",
   'We accept emotional support credit.',
   'Tap to feel richer.',
   'Pre-order the unannounced.',
@@ -58,6 +71,8 @@ const gradients = [
 
 let sessionSeconds = 0;
 let tickInterval = null;
+let editMode = false;
+let ads = [];
 
 function pad(n) {
   return String(n).padStart(2, '0');
@@ -74,32 +89,74 @@ function randomItem(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-function buildAdCard() {
-  const div = document.createElement('div');
-  div.className = 'ad';
-  div.style.background = randomItem(gradients);
-
-  const headline = randomItem(products);
-  const copy = randomItem(slogans);
-  const tag = randomItem(tags);
-  const price = randomItem(priceTags);
-
-  div.innerHTML = `
-    <span class="tag">${tag}</span>
-    <p class="headline">${headline}</p>
-    <p class="copy">${copy}</p>
-    <span class="price">${price}</span>
-  `;
-
-  return div;
+function generateRandomAd() {
+  return {
+    tag: randomItem(tags),
+    headline: randomItem(products),
+    copy: randomItem(slogans),
+    price: randomItem(priceTags),
+    bg: randomItem(gradients)
+  };
 }
 
-function fillAds(count = 160) {
-  const frag = document.createDocumentFragment();
-  for (let i = 0; i < count; i += 1) {
-    frag.appendChild(buildAdCard());
+function createDefaultAds(count = 120) {
+  return Array.from({ length: count }, generateRandomAd);
+}
+
+function loadAds() {
+  try {
+    const stored = localStorage.getItem(ADS_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (_err) {
+    // ignore parse errors and fall back
   }
+  return createDefaultAds();
+}
+
+function saveAds() {
+  localStorage.setItem(ADS_KEY, JSON.stringify(ads));
+}
+
+function renderAds() {
+  adWall.innerHTML = '';
+  const frag = document.createDocumentFragment();
+
+  ads.forEach((ad, index) => {
+    const card = document.createElement('div');
+    card.className = 'ad';
+    card.dataset.index = String(index);
+    card.style.background = ad.bg || randomItem(gradients);
+
+    card.innerHTML = `
+      <button class="delete-btn" data-action="delete" title="Delete ad">x</button>
+      <span class="tag">${ad.tag || ''}</span>
+      <p class="headline">${ad.headline || ''}</p>
+      <p class="copy">${ad.copy || ''}</p>
+      <span class="price">${ad.price || ''}</span>
+    `;
+
+    frag.appendChild(card);
+  });
+
   adWall.appendChild(frag);
+  document.body.classList.toggle('edit-mode', editMode);
+}
+
+function openModal(prefill = {}) {
+  tagInput.value = prefill.tag || randomItem(tags);
+  headlineInput.value = prefill.headline || randomItem(products);
+  copyInput.value = prefill.copy || randomItem(slogans);
+  priceInput.value = prefill.price || randomItem(priceTags);
+  bgInput.value = prefill.bg || randomItem(gradients);
+  adModal.classList.remove('hidden');
+  tagInput.focus();
+}
+
+function closeModal() {
+  adModal.classList.add('hidden');
 }
 
 function loadBest() {
@@ -111,42 +168,10 @@ function saveBest(seconds) {
   localStorage.setItem(SESSION_KEY, String(seconds));
 }
 
-function getLeaderboardData(current) {
-  const baseline = [
-    { name: 'Lingerer#1', seconds: 7200 },
-    { name: 'AdEnjoyer', seconds: 5400 },
-    { name: 'ScrollGoblin', seconds: 3600 },
-    { name: 'NeonGazer', seconds: 2400 },
-    { name: 'RooftopWatcher', seconds: 1800 }
-  ];
-
-  const best = loadBest();
-  const meSeconds = Math.max(best, current);
-  const mine = { name: 'You', seconds: meSeconds };
-
-  const merged = [...baseline, mine].sort((a, b) => b.seconds - a.seconds).slice(0, 8);
-  return { merged, top: merged[0]?.seconds || 0 };
-}
-
-function renderBoard(current = 0) {
-  const { merged, top } = getLeaderboardData(current);
-  boardList.innerHTML = '';
-
-  merged.forEach((entry) => {
-    const li = document.createElement('li');
-    li.className = 'row' + (entry.name === 'You' ? ' me' : '');
-    li.innerHTML = `
-      <span class="name">${entry.name}</span>
-      <span class="time">${formatSeconds(entry.seconds)}</span>
-    `;
-    boardList.appendChild(li);
-  });
-
-  topTimeEl.textContent = formatSeconds(top);
-}
-
 function updateTimers() {
-  sessionTimeEl.textContent = formatSeconds(sessionSeconds);
+  const formatted = formatSeconds(sessionSeconds);
+  sessionTimeEl.textContent = formatted;
+  clockDisplay.textContent = formatted;
   const best = loadBest();
   bestTimeEl.textContent = best > 0 ? formatSeconds(best) : '--';
 }
@@ -156,7 +181,6 @@ function startTimer() {
   tickInterval = setInterval(() => {
     sessionSeconds += 1;
     updateTimers();
-    renderBoard(sessionSeconds);
   }, 1000);
 }
 
@@ -170,18 +194,75 @@ function stopTimer() {
   }
 }
 
-function init() {
-  fillAds(200);
+function resetTimer() {
+  stopTimer();
+  sessionSeconds = 0;
   updateTimers();
-  renderBoard(0);
+  startTimer();
+}
+
+function exportAds() {
+  const json = JSON.stringify(ads, null, 2);
+  navigator.clipboard
+    .writeText(json)
+    .then(() => alert('Copied ads JSON to clipboard.'))
+    .catch(() => alert('Could not copy automatically. Here is your JSON:\n' + json));
+}
+
+function init() {
+  ads = loadAds();
+  renderAds();
+  updateTimers();
   startTimer();
 
-  scrollBtn.addEventListener('click', () => {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  resetBtn.addEventListener('click', resetTimer);
+
+  editToggle.addEventListener('click', () => {
+    editMode = !editMode;
+    editToggle.textContent = editMode ? 'Done editing' : 'Edit ads';
+    renderAds();
   });
 
-  toLeaderboard.addEventListener('click', () => {
-    document.getElementById('leaderboard').scrollIntoView({ behavior: 'smooth' });
+  addAdBtn.addEventListener('click', () => openModal());
+  modalClose.addEventListener('click', closeModal);
+  cancelModal.addEventListener('click', closeModal);
+
+  adForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const newAd = {
+      tag: tagInput.value.trim() || 'Ad',
+      headline: headlineInput.value.trim() || 'Your Ad Here',
+      copy: copyInput.value.trim() || 'Click now.',
+      price: priceInput.value.trim() || '$99',
+      bg: bgInput.value.trim() || randomItem(gradients)
+    };
+    ads.unshift(newAd);
+    saveAds();
+    renderAds();
+    closeModal();
+  });
+
+  adWall.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target && target.dataset.action === 'delete' && editMode) {
+      const card = target.closest('.ad');
+      const index = card ? Number(card.dataset.index) : -1;
+      if (index >= 0) {
+        ads.splice(index, 1);
+        saveAds();
+        renderAds();
+      }
+    }
+  });
+
+  exportBtn.addEventListener('click', exportAds);
+
+  resetAdsBtn.addEventListener('click', () => {
+    if (confirm('Reset ads to default set?')) {
+      ads = createDefaultAds();
+      saveAds();
+      renderAds();
+    }
   });
 
   window.addEventListener('beforeunload', stopTimer);
