@@ -20,6 +20,9 @@ const bgInput = document.getElementById('bgInput');
 
 const SESSION_KEY = 'makememoney_best_seconds';
 const ADS_KEY = 'makememoney_ads_v1';
+const TIMER_KEY = 'makememoney_elapsed_v1';
+const TIMER_START_KEY = 'makememoney_last_start_v1';
+const TIMER_RUNNING_KEY = 'makememoney_running_v1';
 
 const slogans = [
   'Buy faster. Spend harder.',
@@ -71,6 +74,8 @@ const gradients = [
 
 let sessionSeconds = 0;
 let tickInterval = null;
+let baseElapsed = 0;
+let lastStartMs = null;
 let editMode = false;
 let ads = [];
 
@@ -168,7 +173,24 @@ function saveBest(seconds) {
   localStorage.setItem(SESSION_KEY, String(seconds));
 }
 
+function persistTimerState(running) {
+  localStorage.setItem(TIMER_KEY, String(baseElapsed));
+  localStorage.setItem(TIMER_RUNNING_KEY, running ? '1' : '0');
+  if (running && lastStartMs) {
+    localStorage.setItem(TIMER_START_KEY, String(lastStartMs));
+  } else {
+    localStorage.removeItem(TIMER_START_KEY);
+  }
+}
+
+function computeElapsed() {
+  const now = Date.now();
+  const live = lastStartMs ? Math.floor((now - lastStartMs) / 1000) : 0;
+  return baseElapsed + live;
+}
+
 function updateTimers() {
+  sessionSeconds = computeElapsed();
   const formatted = formatSeconds(sessionSeconds);
   sessionTimeEl.textContent = formatted;
   clockDisplay.textContent = formatted;
@@ -176,29 +198,43 @@ function updateTimers() {
   bestTimeEl.textContent = best > 0 ? formatSeconds(best) : '--';
 }
 
-function startTimer() {
+function startTimer(resume = false) {
   if (tickInterval) return;
+  if (!resume) {
+    baseElapsed = computeElapsed(); // ensure base up to date
+  }
+  lastStartMs = Date.now();
+  persistTimerState(true);
   tickInterval = setInterval(() => {
-    sessionSeconds += 1;
     updateTimers();
+    const best = loadBest();
+    if (sessionSeconds > best) {
+      saveBest(sessionSeconds);
+    }
   }, 1000);
 }
 
 function stopTimer() {
   if (!tickInterval) return;
+  baseElapsed = computeElapsed();
   clearInterval(tickInterval);
   tickInterval = null;
+  lastStartMs = null;
+  persistTimerState(false);
   const best = loadBest();
   if (sessionSeconds > best) {
     saveBest(sessionSeconds);
   }
+  sessionSeconds = baseElapsed;
+  updateTimers();
 }
 
 function resetTimer() {
-  stopTimer();
-  sessionSeconds = 0;
+  baseElapsed = 0;
+  lastStartMs = Date.now();
+  persistTimerState(true);
   updateTimers();
-  startTimer();
+  if (!tickInterval) startTimer(true);
 }
 
 function exportAds() {
@@ -212,8 +248,20 @@ function exportAds() {
 function init() {
   ads = loadAds();
   renderAds();
-  updateTimers();
-  startTimer();
+
+  // Restore timer state
+  const storedElapsed = Number(localStorage.getItem(TIMER_KEY) || 0);
+  const storedStart = Number(localStorage.getItem(TIMER_START_KEY) || 0);
+  const storedRunning = localStorage.getItem(TIMER_RUNNING_KEY) === '1';
+  baseElapsed = Number.isFinite(storedElapsed) ? storedElapsed : 0;
+  if (storedRunning && storedStart) {
+    lastStartMs = storedStart;
+    updateTimers();
+    startTimer(true);
+  } else {
+    lastStartMs = null;
+    updateTimers();
+  }
 
   resetBtn.addEventListener('click', resetTimer);
 
