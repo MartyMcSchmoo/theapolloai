@@ -1,22 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Apollo AI</title>
-  <link rel="stylesheet" href="style.css"/>
-</head>
-<body>
-  <div class="chat-container">
-    <header>
-      <h1>Apollo AI</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MakeMeMoney — Ad Canyon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Archivo+Black&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Welcome to</p>
+        <h1>MakeMeMoney</h1>
+        <p class="lede">
+          A neon ad canyon inspired by Times Square. Scroll forever, stare at fake billboards, and climb the leaderboard
+          by staying the longest. No account, no paywalls—just your time.
+        </p>
+        <div class="cta-row">
+          <button id="scrollBtn">Scroll me</button>
+          <button class="ghost" id="toLeaderboard">Leaderboard</button>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <p class="label">Your session</p>
+          <p class="value" id="sessionTime">00:00:00</p>
+        </div>
+        <div class="stat">
+          <p class="label">Your record</p>
+          <p class="value" id="bestTime">--</p>
+        </div>
+        <div class="stat">
+          <p class="label">All-time top</p>
+          <p class="value" id="topTime">--</p>
+        </div>
+      </div>
     </header>
-    <div class="chat-box" id="chatBox"></div>
-    <form id="chatForm" class="input-form">
-      <input type="text" id="userInput" placeholder="Type your message..." autocomplete="off"/>
-      <button type="submit">Send</button>
-    </form>
-  </div>
-  <script src="script.js"></script>
-</body>
+
+    <main>
+      <section class="ad-wall" id="adWall" aria-label="Endless ad wall"></section>
+
+      <section class="leaderboard" id="leaderboard">
+        <div>
+          <p class="eyebrow">Leaderboard</p>
+          <h2>Longest visitors</h2>
+          <p class="lede small">Locally tracked—beat the clock and refresh to keep your crown.</p>
+        </div>
+        <ol id="boardList" class="board"></ol>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Scroll. Zone out. Tell sponsors it makes money. Repeat.</p>
+    </footer>
+
+    <script src="script.js" defer></script>
+  </body>
 </html>
