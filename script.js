@@ -261,6 +261,7 @@ function init() {
   } else {
     lastStartMs = null;
     updateTimers();
+    startTimer();
   }
 
   resetBtn.addEventListener('click', resetTimer);
