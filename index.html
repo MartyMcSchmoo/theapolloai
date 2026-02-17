@@ -1,83 +1,115 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MakeMeMoney — Ad Canyon</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Archivo+Black&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <div class="hud">
-      <div class="pill">
-        Session <span id="sessionTime">00:00:00</span>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Motocross</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game" aria-label="Motocross game canvas"></canvas>
+
+  <div class="title-screen" id="title-screen">
+    <div class="title-card">
+      <div class="game-logo">Neon Motocross</div>
+      <div class="game-tagline">Arcade bikes, surreal worlds</div>
+
+      <div class="modes-grid" id="mode-cards">
+        <button class="mode-card" data-mode="chill">
+          <div class="mode-name">Chill</div>
+          <div class="mode-desc">Coast endlessly, low pressure.</div>
+        </button>
+        <button class="mode-card active" data-mode="standard">
+          <div class="mode-name">Standard</div>
+          <div class="mode-desc">Ride far and shoot foes.</div>
+        </button>
+        <button class="mode-card" data-mode="nightmare">
+          <div class="mode-name">Nightmare</div>
+          <div class="mode-desc">Harder spawns, kill objective.</div>
+        </button>
+        <button class="mode-card" data-mode="infiltrator">
+          <div class="mode-name">Infiltrator</div>
+          <div class="mode-desc">Enemies ignore you; reach the distance.</div>
+        </button>
+        <button class="mode-card" data-mode="chaos">
+          <div class="mode-name">Chaos</div>
+          <div class="mode-desc">Dense spawns, high-speed run.</div>
+        </button>
       </div>
-      <div class="pill">
-        Your record <span id="bestTime">--</span>
+
+      <div class="title-row">
+        <label for="world-select">World</label>
+        <select id="world-select" aria-label="Select world theme">
+          <option value="neon" selected>Neon</option>
+          <option value="desert">Desert</option>
+          <option value="snow">Snow</option>
+          <option value="toxic">Toxic</option>
+        </select>
       </div>
-      <button id="resetBtn" class="ghost">Reset timer</button>
+      <div class="title-row">
+        <label for="bike-select">Bike</label>
+        <select id="bike-select" aria-label="Select bike">
+          <option value="nova" selected>Nova</option>
+          <option value="duner">Duner</option>
+          <option value="frost">Frost</option>
+          <option value="shadow">Shadow</option>
+        </select>
+      </div>
+      <div class="title-objective" id="title-objective">Pick a mode to see its objective.</div>
+      <button id="title-start-btn" class="title-start">Start</button>
     </div>
+  </div>
 
-    <div class="editor-bar">
-      <div class="left">
-        <button id="editToggle" class="ghost">Edit ads</button>
-        <button id="addAdBtn">Add ad slot</button>
-      </div>
-      <div class="right">
-        <button id="exportBtn" class="ghost">Export JSON</button>
-        <button id="resetAdsBtn" class="ghost">Reset ads</button>
-      </div>
+  <div class="corner-buttons">
+    <label class="soundtrack-label" for="track-select">Soundtrack:</label>
+    <select id="track-select" aria-label="Select soundtrack">
+      <option value="chip" selected>Chiptune</option>
+      <option value="jazz">Velvet Jazz</option>
+      <option value="bigband">Big Band Blast</option>
+      <option value="funk">Funk Streets</option>
+    </select>
+    <button id="fortnite-btn" title="Drop a Fortnite-style boost">Fortnite</button>
+  </div>
+
+  <div class="hud">
+    <div class="hud-title">Neon Motocross</div>
+    <div class="hud-row">
+      <span class="label">Speed</span>
+      <span class="value" id="speed">0 km/h</span>
     </div>
-
-    <div class="timer" aria-live="polite">
-      <div class="clock" id="clockDisplay">00:00:00</div>
-      <div class="subtext">Stay the longest to claim the (fake) crown.</div>
+    <div class="hud-row">
+      <span class="label">Distance</span>
+      <span class="value" id="distance">0 m</span>
     </div>
+    <div class="hud-row">
+      <span class="label">Best</span>
+      <span class="value" id="best">0 m</span>
+    </div>
+    <div class="hud-row">
+      <span class="label">Kills</span>
+      <span class="value" id="kills">0</span>
+    </div>
+    <div class="hud-row">
+      <span class="label">Powerups</span>
+      <span class="value" id="powerups">None</span>
+    </div>
+  </div>
 
-    <main>
-      <section class="ad-wall" id="adWall" aria-label="Endless ad wall"></section>
-    </main>
-
-    <div class="modal hidden" id="adModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Add ad slot</h3>
-          <button id="modalClose" class="ghost small" type="button">x</button>
-        </div>
-        <form id="adForm" class="form">
-          <label>
-            Tag
-            <input id="tagInput" type="text" placeholder="Hot" required />
-          </label>
-          <label>
-            Headline
-            <input id="headlineInput" type="text" placeholder="Your Ad Here" required />
-          </label>
-          <label>
-            Copy
-            <input id="copyInput" type="text" placeholder="Buy faster. Spend harder." required />
-          </label>
-          <label>
-            Price
-            <input id="priceInput" type="text" placeholder="$99" required />
-          </label>
-          <label>
-            Background (CSS color or gradient)
-            <input id="bgInput" type="text" placeholder="linear-gradient(135deg,#ff4f6f,#ffc371)" />
-          </label>
-          <div class="form-actions">
-            <button type="submit">Save ad</button>
-            <button type="button" class="ghost" id="cancelModal">Cancel</button>
-          </div>
-        </form>
+  <div class="overlay" id="overlay">
+    <div class="overlay-card">
+      <div class="overlay-title" id="overlay-title">Ride!</div>
+      <div class="overlay-body" id="overlay-body">
+        <div class="overlay-message" id="message-text"></div>
+        <div class="overlay-hint" id="objective-text"></div>
+        <div class="overlay-hint">Press R or the button to restart.</div>
       </div>
+      <button id="start-btn">Start Run</button>
     </div>
+  </div>
 
-    <script src="script.js" defer></script>
-  </body>
+  <script src="main.js"></script>
+</body>
 </html>
